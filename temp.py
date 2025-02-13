@@ -1,7 +1,7 @@
 import pandas as pd
 import io
 
-# --- Required Columns ---
+# Required Columns
 REQUIRED_COLUMNS = {
     'time': 'Time (s)',
     'altitude': 'Altitude (ft)',
@@ -12,15 +12,14 @@ REQUIRED_COLUMNS = {
     'cpLocation':'CP location (in)',
 }
 
-# --- Read CSV File ---
+# Load CSV File
 def load_csv(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
+        return lines
 
-    # Print all lines including comments
-    for line in lines[:20]:  # Print first 20 lines to check structure
-        print(line.strip())
-
+# Get required columns
+def get_required_columns(lines):
     # Find the first non-metadata line (header row)
     header_line = 0
     for i, line in enumerate(lines):
@@ -30,10 +29,6 @@ def load_csv(file_path):
 
     # Clean the header line by removing the leading '#'
     header = lines[header_line].lstrip('#').strip()
-
-    # Print the detected header row for debugging
-    print(f"Detected header row: {header_line}")
-    print(f"Header content: {lines[header_line]}")
 
     # Reconstruct CSV data, starting from the actual data rows
     csv_data = '\n'.join([header] + lines[header_line + 1:])
@@ -54,9 +49,10 @@ def load_csv(file_path):
     df = df[list(selected_columns.values())]
     df.rename(columns=selected_columns, inplace=True)  # Standardize column names
 
-    print(df.head().to_string(index=False))  # Display first few rows to confirm successful import
+    print(df.head(50).to_string(index=False))  # Display first few rows to confirm successful import
     return df
 
 # --- Main Execution ---
 file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\Aurora_Cycle0_14-11-2024 - Copy.csv'  # Replace with actual file path
-df = load_csv(file_path)
+lines = load_csv(file_path)
+df = get_required_columns(lines)
