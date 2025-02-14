@@ -5,15 +5,15 @@ import io
 # time in seconds, distance in meters or feet or inches, area in cm² or m² or in²
 
 # Required Columns
-REQUIRED_COLUMNS = {
-    'time': 'Time',
-    'altitude': 'Altitude',
-    'velocity': 'Total velocity',
-    'referenceArea':'Reference area',
-    'normalForceCoefficient':'Normal force coefficient',
-    'cgLocation':'CG location',
-    'cpLocation':'CP location',
-}
+REQUIRED_COLUMNS = [
+    'Time',
+    'Altitude',
+    'Total velocity',
+    'Reference area',
+    'Normal force coefficient',
+    'CG location',
+    'CP location',
+]
 
 # Unit Conversion Factors
 UNIT_CONVERSIONS = {
@@ -26,8 +26,8 @@ UNIT_CONVERSIONS = {
 }
 
 # Required Units
-REQUIRED_UNITS = {'time': 's', 'altitude': 'm', 'velocity': 'm/s', 'referenceArea': 'm²',
-                  'normalForceCoefficient': '', 'cgLocation': 'm', 'cpLocation': 'm'}
+REQUIRED_UNITS = {'Time': 's', 'Altitude': 'm', 'Total velocity': 'm/s', 'Reference area': 'm²',
+                  'Normal force coefficient': '', 'CG location': 'm', 'CP location': 'm'}
 
 # Load CSV File
 def load_csv(file_path):
@@ -52,6 +52,10 @@ def convert_units(df, column_units, selected_columns):
             if conversion_factor:
                 df[keyNameWithOriginalUnit] = pd.to_numeric(df[keyNameWithOriginalUnit], errors='coerce')  # Ensure numeric data
                 df[keyNameWithOriginalUnit] *= conversion_factor
+                # Update the column name to reflect the new unit
+                # new_column_name = f"{key} ({required_unit})"
+                # print("new column name:", new_column_name)
+                # df.rename(columns={keyNameWithOriginalUnit: new_column_name}, inplace=True)
             else:
                 print(f"Warning: No conversion available for {keyNameWithOriginalUnit} from {actual_unit} to {required_unit}.")
     return df
@@ -80,11 +84,11 @@ def get_required_columns(lines):
     # Match required columns using partial names
     selected_columns = {}
     column_units = {}
-    for key, col_substring in REQUIRED_COLUMNS.items():
+    for col_substring in REQUIRED_COLUMNS:
         for col in df.columns:
             if col_substring.lower() in col.lower():  # Case-insensitive substring search
-                selected_columns[key] = col
-                column_units[key] = extract_unit(col)
+                selected_columns[col_substring] = col
+                column_units[col_substring] = extract_unit(col)
                 break  # Stop searching once the first match is found
     if not selected_columns:
         print("Warning: No matching columns found in CSV. Check column names.")
