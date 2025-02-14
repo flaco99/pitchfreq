@@ -6,13 +6,13 @@ import io
 
 # Required Columns
 REQUIRED_COLUMNS = {
-    'time': 'Time (s)',
-    'altitude': 'Altitude (ft)',
-    'velocity': 'Total velocity (ft/s)',
+    'time': 'Time',
+    'altitude': 'Altitude',
+    'velocity': 'Total velocity',
     'referenceArea':'Reference area',
     'normalForceCoefficient':'Normal force coefficient',
-    'cgLocation':'CG location (in)',
-    'cpLocation':'CP location (in)',
+    'cgLocation':'CG location',
+    'cpLocation':'CP location',
 }
 
 # Unit Conversion Factors
