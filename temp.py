@@ -115,18 +115,36 @@ def get_required_columns(lines):
 def get_air_density(altitude):
     return altitude*(-0.00012333333)+1.2; # todo: make more accurate
 
+def get_events(df):
+    # Extract event markers and the next timestamp
+    events = []
+    for i, line in enumerate(lines):
+        if line.startswith('# Event'):
+            event_description = line.strip('#').strip()
+            # Find the next timestamp after the event line
+            for j in range(i + 1, len(lines)):
+                split_line = lines[j].split(',')
+                if split_line[0].replace('.', '', 1).isdigit():
+                    event_time = float(split_line[0])
+                    events.append((event_description, event_time))
+                    break
+    return events
+
 def add_air_and_inertia(df):
     if 'Altitude (m)' not in df.columns:
         raise KeyError("The DataFrame must contain an 'Altitude (m)' column.")
     altitude_values = df['Altitude (m)']
     air_density_values = altitude_values.apply(get_air_density)
     df['Air Density (kg/m³)'] = air_density_values
+
     return df
 
 # --- Main Execution ---
 file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\Aurora_Cycle0_14-11-2024 - Copy.csv'  # Replace with actual file path
 lines = load_csv(file_path)
 df = get_required_columns(lines)
+e = get_events(df)
+print(e)
 df = add_air_and_inertia(df)
 print(df.head(10).to_string(index=False))  # Display first few rows
 print(df.iloc[200].to_string(index=False, header=False).replace("\n", "   |    "))
