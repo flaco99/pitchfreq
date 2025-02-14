@@ -2,7 +2,7 @@ import pandas as pd
 import io
 
 # please don't be weird and make sure you export with normal units:
-# time in seconds, distance in meters or feet or inches, area in cm² or m²
+# time in seconds, distance in meters or feet or inches, area in cm² or m² or in²
 
 # Required Columns
 REQUIRED_COLUMNS = {
@@ -17,9 +17,13 @@ REQUIRED_COLUMNS = {
 
 # Unit Conversion Factors
 UNIT_CONVERSIONS = {
+    ('in', 'm'): 0.0254,
     ('ft', 'm'): 0.3048,
     ('ft/s', 'm/s'): 0.3048,
+    ('cm²','m²'): 0.0001,
+    ('in²','m²'): 0.00064516,
     ('lb·ft²', 'kg·m²'): 0.0421401,
+    ('', ''): 1.0
 }
 
 # Load CSV File
@@ -27,6 +31,28 @@ def load_csv(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
         return lines
+
+# Extract Unit from Column Name
+def extract_unit(column_name):
+    """Extracts the unit from a column name if present inside parentheses."""
+    if '(' in column_name and ')' in column_name:
+        return column_name.split('(')[-1].split(')')[0]
+    return None
+
+# Convert Units
+def convert_units(df, column_units):
+    for key, expected_unit in REQUIRED_COLUMNS.values():
+        actual_unit = column_units.get(key)
+
+        if actual_unit and actual_unit != expected_unit:
+            conversion_factor = UNIT_CONVERSIONS.get((actual_unit, expected_unit))
+
+            if conversion_factor:
+                df[key] *= conversion_factor
+                print(f"Converted {key} from {actual_unit} to {expected_unit}.")
+            else:
+                print(f"Warning: No conversion available for {key} from {actual_unit} to {expected_unit}.")
+    return df
 
 # Get required columns
 def get_required_columns(lines):
@@ -51,10 +77,12 @@ def get_required_columns(lines):
 
     # Match required columns using partial names
     selected_columns = {}
+    column_units = {}
     for key, col_substring in REQUIRED_COLUMNS.items():
         for col in df.columns:
             if col_substring.lower() in col.lower():  # Case-insensitive substring search
                 selected_columns[key] = col
+                column_units[key] = extract_unit(col)
                 break  # Stop searching once the first match is found
     if not selected_columns:
         print("Warning: No matching columns found in CSV. Check column names.")
@@ -68,6 +96,11 @@ def get_required_columns(lines):
 
     df = df[valid_columns]
     df.rename(columns=selected_columns, inplace=True)  # Standardize column names
+
+    # Convert units using separate function
+    #df = convert_units(df, column_units)
+    print("columnunits: ")
+    print(column_units)
 
     print(df.head(50).to_string(index=False))  # Display first few rows to confirm successful import
     return df
