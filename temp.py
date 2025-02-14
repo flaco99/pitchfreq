@@ -25,9 +25,11 @@ UNIT_CONVERSIONS = {
     ('lb·ft²', 'kg·m²'): 0.0421401,
 }
 
-# Required Units
+# Required Units and Columns
 REQUIRED_UNITS = {'Time': 's', 'Altitude': 'm', 'Total velocity': 'm/s', 'Reference area': 'm²',
                   'Normal force coefficient': '', 'CG location': 'm', 'CP location': 'm'}
+REQUIRED_COLUMN_NAMES = ['Time (s)', 'Altitude (m)', 'Total velocity (m/s)', 'Reference area (m²)',
+                   'Normal force coefficient ()', 'CG location (m)', 'CP location (m)']
 
 # Load CSV File
 def load_csv(file_path):
@@ -53,9 +55,8 @@ def convert_units(df, column_units, selected_columns):
                 df[keyNameWithOriginalUnit] = pd.to_numeric(df[keyNameWithOriginalUnit], errors='coerce')  # Ensure numeric data
                 df[keyNameWithOriginalUnit] *= conversion_factor
                 # Update the column name to reflect the new unit
-                # new_column_name = f"{key} ({required_unit})"
-                # print("new column name:", new_column_name)
-                # df.rename(columns={keyNameWithOriginalUnit: new_column_name}, inplace=True)
+                new_column_name = f"{key} ({required_unit})"
+                df.rename(columns={keyNameWithOriginalUnit: new_column_name}, inplace=True)
             else:
                 print(f"Warning: No conversion available for {keyNameWithOriginalUnit} from {actual_unit} to {required_unit}.")
     return df
@@ -107,7 +108,7 @@ def get_required_columns(lines):
     df = convert_units(df, column_units, selected_columns)
 
     # Remove rows where critical columns contain NaN
-    df = df.dropna(subset=selected_columns.values())
+    df = df.dropna(subset=REQUIRED_COLUMN_NAMES)
 
     print(df.head(10).to_string(index=False))  # Display first few rows to confirm successful import
     return df
