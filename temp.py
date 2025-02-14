@@ -7,7 +7,7 @@ REQUIRED_COLUMNS = {
     'altitude': 'Altitude (ft)',
     'velocity': 'Total velocity (ft/s)',
     'referenceArea':'Reference area (cm²)',
-    'normalForceCoefficient':'Normal force coefficient (​)',
+    'normalForceCoefficient':'Normal force coefficient ()',
     'cgLocation':'CG location (in)',
     'cpLocation':'CP location (in)',
 }
@@ -38,6 +38,14 @@ def get_required_columns(lines):
 
     # Strip whitespace and normalize column names
     df.columns = df.columns.str.strip().str.replace('\u200b', '')  # Remove invisible Unicode characters
+
+    # Match required columns using partial names
+    selected_columns = {}
+    for key, col_substring in REQUIRED_COLUMNS.items():
+        for col in df.columns:
+            if col_substring.lower() in col.lower():  # Case-insensitive substring search
+                selected_columns[key] = col
+                break  # Stop searching once the first match is found
 
     # Extract only relevant columns
     selected_columns = {key: col for key, col in REQUIRED_COLUMNS.items() if col in df.columns}
