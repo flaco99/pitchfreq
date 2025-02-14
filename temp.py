@@ -23,8 +23,11 @@ UNIT_CONVERSIONS = {
     ('cm²','m²'): 0.0001,
     ('in²','m²'): 0.00064516,
     ('lb·ft²', 'kg·m²'): 0.0421401,
-    ('', ''): 1.0
 }
+
+# Required Units
+REQUIRED_UNITS = {'time': 's', 'altitude': 'm', 'velocity': 'm/s', 'referenceArea': 'm²',
+                  'normalForceCoefficient': '', 'cgLocation': 'm', 'cpLocation': 'm'}
 
 # Load CSV File
 def load_csv(file_path):
@@ -40,18 +43,17 @@ def extract_unit(column_name):
     return None
 
 # Convert Units
-def convert_units(df, column_units):
-    for key, expected_unit in REQUIRED_COLUMNS.values():
+def convert_units(df, column_units, selected_columns):
+    for key, required_unit in REQUIRED_UNITS.items():
+        keyNameWithOriginalUnit = selected_columns[key]
         actual_unit = column_units.get(key)
-
-        if actual_unit and actual_unit != expected_unit:
-            conversion_factor = UNIT_CONVERSIONS.get((actual_unit, expected_unit))
-
+        if actual_unit and actual_unit != required_unit:
+            conversion_factor = UNIT_CONVERSIONS.get((actual_unit, required_unit))
             if conversion_factor:
-                df[key] *= conversion_factor
-                print(f"Converted {key} from {actual_unit} to {expected_unit}.")
+                df[keyNameWithOriginalUnit] = pd.to_numeric(df[keyNameWithOriginalUnit], errors='coerce')  # Ensure numeric data
+                df[keyNameWithOriginalUnit] *= conversion_factor
             else:
-                print(f"Warning: No conversion available for {key} from {actual_unit} to {expected_unit}.")
+                print(f"Warning: No conversion available for {keyNameWithOriginalUnit} from {actual_unit} to {required_unit}.")
     return df
 
 # Get required columns
@@ -98,11 +100,12 @@ def get_required_columns(lines):
     df.rename(columns=selected_columns, inplace=True)  # Standardize column names
 
     # Convert units using separate function
-    #df = convert_units(df, column_units)
-    print("columnunits: ")
-    print(column_units)
+    df = convert_units(df, column_units, selected_columns)
 
-    print(df.head(50).to_string(index=False))  # Display first few rows to confirm successful import
+    # Remove rows where critical columns contain NaN
+    df = df.dropna(subset=selected_columns.values())
+
+    print(df.head(10).to_string(index=False))  # Display first few rows to confirm successful import
     return df
 
 # --- Main Execution ---
