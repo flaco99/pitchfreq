@@ -258,7 +258,7 @@ def plot_pitch_frequency(df, events):
         event_text = event.split()[2]
         if event_text in ['LAUNCH', 'BURNOUT', 'APOGEE']:
             plt.axvline(x=time, color='blue', linestyle='dashed', alpha=0.7)
-            plt.text(time, 0.002, event_text, rotation=0, fontsize=9, color="blue")
+            plt.text(time+0.2, 0.002, event_text, rotation=0, fontsize=9, color="blue")
 
     plt.legend()
     plt.grid()
