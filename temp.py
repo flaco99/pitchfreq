@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import ticker
 import io
 
 # please don't be weird and make sure you export with normal units:
@@ -186,7 +188,7 @@ def add_air_and_inertia(df):
 
     return df
 
-def get_pitch_freq(df):
+def add_pitch_freq(df):
     # Add a column for natural pitch frequency in rad/sec
     df['Pitch Frequency (rad/sec)'] = np.sqrt(
         ((df['Air Density (kg/m³)'] / 2) * (df['Total velocity (m/s)'] ** 2) *
@@ -203,11 +205,29 @@ def get_pitch_freq(df):
 
     return df
 
-# --- Main Execution ---
+def plot_pitch_frequency(df):
+    # Generate a plot of Pitch Frequency (Hz) vs Time (s)
+    plt.figure(figsize=(10, 5))
+    plt.plot(df['Time (s)'], df['Pitch Frequency (Hz)'], marker='o', linestyle='-', color='b', label='Pitch Frequency (Hz)')
+
+    plt.xlabel('Time (s)')
+    plt.ylabel('Pitch Frequency (Hz)')
+    plt.title('Pitch Frequency vs Time')
+
+    # Format the x-axis to use nice round numbers
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10, integer=True))  # Automatically choose best tick spacing
+
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+# Main Execution
 test_file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\test.csv'
 file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\Aurora_Cycle0_14-11-2024 - Copy.csv'
-lines = load_csv(test_file_path)
+lines = load_csv(file_path)
 df = get_required_columns(lines)
 df = add_air_and_inertia(df)
-get_pitch_freq(df)
+add_pitch_freq(df)
+plot_pitch_frequency(df)
 print(df.head(10).to_string(index=False))  # Display first few rows
