@@ -4,7 +4,7 @@ Author: Naomi Weissberg
 Date: February 14, 2025
 
 This script is for rocketry team members to analyze the natural pitch frequency of a rocket over time.
-It generates a graph based on exported flight simulation data.
+It generates a graph based on exported flight simulation data from OpenRocket.
 
 INSTRUCTIONS:
 - Export a CSV file from OpenRocket. Please don't be weird and make sure you export with normal units.
@@ -14,9 +14,13 @@ INSTRUCTIONS:
 '''
 
 ######################################## INPUT HERE ########################################
+#todo: delete these later
 test_file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\test.csv'
 file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\Aurora_Cycle0_14-11-2024 - Copy.csv'
-CSV_FILE_PATH = file_path
+# File Path
+CSV_FILE_PATH = file_path # = r'C:\Users\Name\...\RocketName_CycleX.csv'
+
+# Inertia Values (from mass estimates sheet)
 INERTIA_FULL_TANK = 235050.8943 # lb·in²
 INERTIA_DRY = 192890.4115 # lb·in²
 ############################################################################################
@@ -55,10 +59,11 @@ REQUIRED_UNITS = {'Time': 's', 'Altitude': 'm', 'Total velocity': 'm/s', 'Refere
 REQUIRED_COLUMN_NAMES = ['Time (s)', 'Altitude (m)', 'Total velocity (m/s)', 'Reference area (m²)',
                    'Normal force coefficient ()', 'CG location (m)', 'CP location (m)']
 
-# Constants
+# Constants and placeholders
 BURNOUT_TIME = 0 # placeholder
 INERTIA_FULL_TANK *= 0.0002926397  # converted to kg-m^2
 INERTIA_DRY *= 0.0002926397  # converted to kg-m^2
+events = [] # placeholder
 
 # Load CSV File
 def load_csv(file_path):
@@ -161,9 +166,9 @@ def get_required_columns(lines):
     # Convert units using separate function
     df = convert_units(df, column_units, selected_columns)
 
+    # fill events
+    global events
     events, df = get_events(df)
-    print('events:')
-    print(events)
 
     # Remove rows where critical columns contain NaN
     df = df.dropna(subset=REQUIRED_COLUMN_NAMES)
@@ -231,7 +236,7 @@ def add_pitch_freq(df):
 
     return df
 
-def plot_pitch_frequency(df):
+def plot_pitch_frequency(df, events):
     # Generate a plot of Pitch Frequency (Hz) vs Time (s)
     plt.figure(figsize=(10, 5))
 
@@ -248,6 +253,13 @@ def plot_pitch_frequency(df):
     # Format the x-axis to use nice round numbers
     ax.xaxis.set_major_locator(ticker.MultipleLocator(5.0))  # Adjust major ticks every 5 seconds
 
+    # Add event markers
+    for time, event in events:
+        event_text = event.split()[2]
+        if event_text in ['LAUNCH', 'BURNOUT', 'APOGEE']:
+            plt.axvline(x=time, color='blue', linestyle='dashed', alpha=0.7)
+            plt.text(time, 0.002, event_text, rotation=0, fontsize=9, color="blue")
+
     plt.legend()
     plt.grid()
     plt.show()
@@ -257,6 +269,7 @@ lines = load_csv(CSV_FILE_PATH)
 df = get_required_columns(lines)
 df = add_air_and_inertia(df)
 add_pitch_freq(df)
-plot_pitch_frequency(df)
+plot_pitch_frequency(df, events)
+# print first and last few rows for confirmation
 print(df.head(5).to_string(index=False))  # Display first few rows
 print(df.tail(5).to_string(index=False))  # Display first few rows
