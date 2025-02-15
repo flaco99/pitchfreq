@@ -61,6 +61,25 @@ def convert_units(df, column_units, selected_columns):
                 print(f"Warning: No conversion available for {keyNameWithOriginalUnit} from {actual_unit} to {required_unit}.")
     return df
 
+def get_events(df):
+    # Extract event markers and associate them with the latest timestamp
+    events = []
+    latest_timestamp = 0.0  # Track the most recent valid timestamp
+
+    for index, row in df.iterrows():
+        time_value = row['Time (s)']
+
+        # Check if the value is a numeric timestamp
+        if isinstance(time_value, (int, float)) or (
+                isinstance(time_value, str) and time_value.replace('.', '', 1).isdigit()):
+            latest_timestamp = float(time_value)  # Update the latest valid timestamp
+
+        # If the value starts with '# Event', treat it as an event description
+        elif isinstance(time_value, str) and time_value.startswith('# Event'):
+            events.append((latest_timestamp, time_value.strip()))
+
+    return events
+
 # Get required columns
 def get_required_columns(lines):
     # Find the first non-metadata line (header row)
@@ -100,12 +119,15 @@ def get_required_columns(lines):
     for col in selected_columns.values():
         if col in df.columns:
             valid_columns.append(col)
-
     df = df[valid_columns]
     df.rename(columns=selected_columns, inplace=True)  # Standardize column names
 
     # Convert units using separate function
     df = convert_units(df, column_units, selected_columns)
+
+    e = get_events(df)
+    print('events:')
+    print(e)
 
     # Remove rows where critical columns contain NaN
     df = df.dropna(subset=REQUIRED_COLUMN_NAMES)
@@ -114,21 +136,6 @@ def get_required_columns(lines):
 
 def get_air_density(altitude):
     return altitude*(-0.00012333333)+1.2; # todo: make more accurate
-
-def get_events(df):
-    # Extract event markers and the next timestamp
-    events = []
-    for i, line in enumerate(lines):
-        if line.startswith('# Event'):
-            event_description = line.strip('#').strip()
-            # Find the next timestamp after the event line
-            for j in range(i + 1, len(lines)):
-                split_line = lines[j].split(',')
-                if split_line[0].replace('.', '', 1).isdigit():
-                    event_time = float(split_line[0])
-                    events.append((event_description, event_time))
-                    break
-    return events
 
 def add_air_and_inertia(df):
     if 'Altitude (m)' not in df.columns:
@@ -140,11 +147,9 @@ def add_air_and_inertia(df):
     return df
 
 # --- Main Execution ---
-file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\Aurora_Cycle0_14-11-2024 - Copy.csv'  # Replace with actual file path
-lines = load_csv(file_path)
+test_file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\test.csv'
+file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\Aurora_Cycle0_14-11-2024 - Copy.csv'
+lines = load_csv(test_file_path)
 df = get_required_columns(lines)
-e = get_events(df)
-print(e)
 df = add_air_and_inertia(df)
 print(df.head(10).to_string(index=False))  # Display first few rows
-print(df.iloc[200].to_string(index=False, header=False).replace("\n", "   |    "))
