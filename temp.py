@@ -32,6 +32,9 @@ REQUIRED_UNITS = {'Time': 's', 'Altitude': 'm', 'Total velocity': 'm/s', 'Refere
 REQUIRED_COLUMN_NAMES = ['Time (s)', 'Altitude (m)', 'Total velocity (m/s)', 'Reference area (m²)',
                    'Normal force coefficient ()', 'CG location (m)', 'CP location (m)']
 
+# Time of MaxQ (will change later)
+BURNOUT_TIME = 0
+
 # Load CSV File
 def load_csv(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -78,7 +81,9 @@ def get_events(df):
         # If the value starts with '# Event', treat it as an event description
         elif isinstance(time_value, str) and time_value.startswith('# Event'):
             events.append((latest_timestamp, time_value.strip()))
-
+            if 'BURNOUT' in time_value.strip():
+                global BURNOUT_TIME
+                BURNOUT_TIME = latest_timestamp
     return events
 
 # Get required columns
