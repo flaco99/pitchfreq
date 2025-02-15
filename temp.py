@@ -162,6 +162,7 @@ def get_air_density(altitude):
     return np.interp(altitude, ALTITUDES, DENSITIES)
 
 def get_inertia(time):
+    # Returns longitudinal moment of inertia (kg/m²) for a given time (s)
     global INERTIA_FULL_TANK, INERTIA_DRY
     if float(time) < BURNOUT_TIME:
         return INERTIA_FULL_TANK
@@ -185,10 +186,22 @@ def add_air_and_inertia(df):
 
     return df
 
+def get_pitch_freq(df):
+    # Calculate natural pitch frequency for each row
+    df['Pitch Frequency (rad/sec)'] = np.sqrt(
+        ((df['Air Density (kg/m³)'] / 2) * (df['Total velocity (m/s)'] ** 2) *
+         df['Reference area (m²)'] * df['Normal force coefficient ()'] *
+         (df['CP location (m)'] - df['CG location (m)'])) /
+        df['Longitudinal moment of inertia (kg·m²)']
+    )
+
+    return df
+
 # --- Main Execution ---
 test_file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\test.csv'
 file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\Aurora_Cycle0_14-11-2024 - Copy.csv'
 lines = load_csv(test_file_path)
 df = get_required_columns(lines)
 df = add_air_and_inertia(df)
+get_pitch_freq(df)
 print(df.head(10).to_string(index=False))  # Display first few rows
