@@ -90,10 +90,17 @@ def get_events(df):
         # If the value starts with '# Event', treat it as an event description
         elif isinstance(time_value, str) and time_value.startswith('# Event'):
             events.append((latest_timestamp, time_value.strip()))
+            # save burnout time
             if 'BURNOUT' in time_value.strip():
                 global BURNOUT_TIME
                 BURNOUT_TIME = latest_timestamp
-    return events
+            # Stop processing data after 'APOGEE' event
+            if 'APOGEE' in time_value:
+                print('length of df before:', len(df))
+                df = df.iloc[:index+1]  # Keep only rows up to this event
+                print('length of df after:', len(df))
+                break
+    return events, df
 
 # Get required columns
 def get_required_columns(lines):
@@ -140,9 +147,9 @@ def get_required_columns(lines):
     # Convert units using separate function
     df = convert_units(df, column_units, selected_columns)
 
-    e = get_events(df)
+    events, df = get_events(df)
     print('events:')
-    print(e)
+    print(events)
 
     # Remove rows where critical columns contain NaN
     df = df.dropna(subset=REQUIRED_COLUMN_NAMES)
@@ -208,15 +215,23 @@ def add_pitch_freq(df):
 def plot_pitch_frequency(df):
     # Generate a plot of Pitch Frequency (Hz) vs Time (s)
     plt.figure(figsize=(10, 5))
-    plt.plot(df['Time (s)'], df['Pitch Frequency (Hz)'], marker='o', linestyle='-', color='b', label='Pitch Frequency (Hz)')
+    # Ensure time values are numeric
+    df['Time (s)'] = pd.to_numeric(df['Time (s)'], errors='coerce')
 
+    plt.plot(df['Time (s)'], df['Pitch Frequency (Hz)'], marker='o',
+             linestyle='-', color='b', label='Pitch Frequency (Hz)')
     plt.xlabel('Time (s)')
     plt.ylabel('Pitch Frequency (Hz)')
     plt.title('Pitch Frequency vs Time')
 
-    # Format the x-axis to use nice round numbers
     ax = plt.gca()
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10, integer=True))  # Automatically choose best tick spacing
+
+    # Format the x-axis to use nice round numbers
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(5.0))  # Adjust major ticks every 5 seconds
+    # ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.0f}'))  # Ensure whole numbers only
+
+    # Set x-axis ticks to avoid overcrowding
+    # ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))  # Adjust the number of ticks
 
     plt.legend()
     plt.grid()
@@ -229,5 +244,7 @@ lines = load_csv(file_path)
 df = get_required_columns(lines)
 df = add_air_and_inertia(df)
 add_pitch_freq(df)
+print('length of df:', len(df))
 plot_pitch_frequency(df)
-print(df.head(10).to_string(index=False))  # Display first few rows
+print(df.head(5).to_string(index=False))  # Display first few rows
+print(df.tail(5).to_string(index=False))  # Display first few rows
