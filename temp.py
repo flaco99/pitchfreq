@@ -210,11 +210,15 @@ def add_pitch_freq(df):
     # Add a column for pitch frequency in Hz
     df['Pitch Frequency (Hz)'] = df['Pitch Frequency (deg/sec)'] / 360.0
 
+    for i in range(2):
+        df['Pitch Frequency (Hz)'] = df['Pitch Frequency (Hz)'].rolling(window=5, center=True).mean()
+
     return df
 
 def plot_pitch_frequency(df):
     # Generate a plot of Pitch Frequency (Hz) vs Time (s)
     plt.figure(figsize=(10, 5))
+
     # Ensure time values are numeric
     df['Time (s)'] = pd.to_numeric(df['Time (s)'], errors='coerce')
 
@@ -225,13 +229,8 @@ def plot_pitch_frequency(df):
     plt.title('Pitch Frequency vs Time')
 
     ax = plt.gca()
-
     # Format the x-axis to use nice round numbers
     ax.xaxis.set_major_locator(ticker.MultipleLocator(5.0))  # Adjust major ticks every 5 seconds
-    # ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.0f}'))  # Ensure whole numbers only
-
-    # Set x-axis ticks to avoid overcrowding
-    # ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))  # Adjust the number of ticks
 
     plt.legend()
     plt.grid()
