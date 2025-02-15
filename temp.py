@@ -187,13 +187,19 @@ def add_air_and_inertia(df):
     return df
 
 def get_pitch_freq(df):
-    # Calculate natural pitch frequency for each row
+    # Add a column for natural pitch frequency in rad/sec
     df['Pitch Frequency (rad/sec)'] = np.sqrt(
         ((df['Air Density (kg/m³)'] / 2) * (df['Total velocity (m/s)'] ** 2) *
          df['Reference area (m²)'] * df['Normal force coefficient ()'] *
          (df['CP location (m)'] - df['CG location (m)'])) /
         df['Longitudinal moment of inertia (kg·m²)']
     )
+
+    # Add a column for pitch frequency in deg/sec
+    df['Pitch Frequency (deg/sec)'] = df['Pitch Frequency (rad/sec)'] * 57.2958
+
+    # Add a column for pitch frequency in Hz
+    df['Pitch Frequency (Hz)'] = df['Pitch Frequency (deg/sec)'] / 360.0
 
     return df
 
