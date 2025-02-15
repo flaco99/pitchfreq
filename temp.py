@@ -1,16 +1,32 @@
+'''
+Rocketry Pitch Frequency Analysis
+Author: Naomi Weissberg
+Date: February 14, 2025
+
+This script is for rocketry team members to analyze the natural pitch frequency of a rocket over time.
+It generates a graph based on exported flight simulation data.
+
+INSTRUCTIONS:
+- Export a CSV file from OpenRocket. Please don't be weird and make sure you export with normal units.
+  (Time in seconds, Distance in meters (m), feet (ft), or inches (in), Area in cm², m², or in²)
+- Update the file path in the INPUT HERE section below.
+- Get inertia values (in lb·in²) from the mass estimates Google Sheets.
+'''
+
+######################################## INPUT HERE ########################################
+test_file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\test.csv'
+file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\Aurora_Cycle0_14-11-2024 - Copy.csv'
+CSV_FILE_PATH = file_path
+INERTIA_FULL_TANK = 235050.8943 # lb·in²
+INERTIA_DRY = 192890.4115 # lb·in²
+############################################################################################
+
+# Imports
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 import io
-
-# please don't be weird and make sure you export with normal units:
-# time in seconds, distance in meters or feet or inches, area in cm² or m² or in²
-
-################################# INPUT HERE #################################
-INERTIA_FULL_TANK = 235050.8943 # lb-in^2
-INERTIA_DRY = 192890.4115 # lb-in^2
-##############################################################################
 
 # Required Columns
 REQUIRED_COLUMNS = [
@@ -96,9 +112,7 @@ def get_events(df):
                 BURNOUT_TIME = latest_timestamp
             # Stop processing data after 'APOGEE' event
             if 'APOGEE' in time_value:
-                print('length of df before:', len(df))
                 df = df.iloc[:index+1]  # Keep only rows up to this event
-                print('length of df after:', len(df))
                 break
     return events, df
 
@@ -210,7 +224,9 @@ def add_pitch_freq(df):
     # Add a column for pitch frequency in Hz
     df['Pitch Frequency (Hz)'] = df['Pitch Frequency (deg/sec)'] / 360.0
 
-    for i in range(2):
+    # Apply rolling average to smooth out fluctuations
+    number_of_times_to_smooth = 1
+    for i in range(number_of_times_to_smooth):
         df['Pitch Frequency (Hz)'] = df['Pitch Frequency (Hz)'].rolling(window=5, center=True).mean()
 
     return df
@@ -237,13 +253,10 @@ def plot_pitch_frequency(df):
     plt.show()
 
 # Main Execution
-test_file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\test.csv'
-file_path = r'C:\Users\naomi\PycharmProjects\pitchfreq\Aurora_Cycle0_14-11-2024 - Copy.csv'
-lines = load_csv(file_path)
+lines = load_csv(CSV_FILE_PATH)
 df = get_required_columns(lines)
 df = add_air_and_inertia(df)
 add_pitch_freq(df)
-print('length of df:', len(df))
 plot_pitch_frequency(df)
 print(df.head(5).to_string(index=False))  # Display first few rows
 print(df.tail(5).to_string(index=False))  # Display first few rows
