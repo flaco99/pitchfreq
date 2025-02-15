@@ -5,6 +5,11 @@ import io
 # please don't be weird and make sure you export with normal units:
 # time in seconds, distance in meters or feet or inches, area in cm² or m² or in²
 
+################################# INPUT HERE #################################
+INERTIA_FULL_TANK = 235050.8943 # lb-in^2
+INERTIA_DRY = 192890.4115 # lb-in^2
+##############################################################################
+
 # Required Columns
 REQUIRED_COLUMNS = [
     'Time',
@@ -32,8 +37,10 @@ REQUIRED_UNITS = {'Time': 's', 'Altitude': 'm', 'Total velocity': 'm/s', 'Refere
 REQUIRED_COLUMN_NAMES = ['Time (s)', 'Altitude (m)', 'Total velocity (m/s)', 'Reference area (m²)',
                    'Normal force coefficient ()', 'CG location (m)', 'CP location (m)']
 
-# Time of MaxQ (will change later)
-BURNOUT_TIME = 0
+# Constants
+BURNOUT_TIME = 0 # placeholder
+INERTIA_FULL_TANK *= 0.0002926397  # converted to kg-m^2
+INERTIA_DRY *= 0.0002926397  # converted to kg-m^2
 
 # Load CSV File
 def load_csv(file_path):
@@ -154,12 +161,27 @@ def get_air_density(altitude):
         return 0.00001
     return np.interp(altitude, ALTITUDES, DENSITIES)
 
+def get_inertia(time):
+    global INERTIA_FULL_TANK, INERTIA_DRY
+    if float(time) < BURNOUT_TIME:
+        return INERTIA_FULL_TANK
+    if float(time) >= BURNOUT_TIME:
+        return INERTIA_DRY
+
 def add_air_and_inertia(df):
+    # add air density column
     if 'Altitude (m)' not in df.columns:
         raise KeyError("The DataFrame must contain an 'Altitude (m)' column.")
     altitude_values = df['Altitude (m)']
     air_density_values = altitude_values.apply(get_air_density)
     df['Air Density (kg/m³)'] = air_density_values
+
+    # add inertia column
+    if 'Time (s)' not in df.columns:
+        raise KeyError("The DataFrame must contain an 'Time (s)' column.")
+    time_values = df['Time (s)']
+    inertia_values = time_values.apply(get_inertia)
+    df['Longitudinal moment of inertia (kg·m²)'] = inertia_values
 
     return df
 
